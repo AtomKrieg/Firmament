@@ -1,6 +1,6 @@
- **Class for converting domain values to abap code type definition.** 
-
-Examples
+ Class for converting domain values to abap code type definition.
+===================
+**Examples**
 
 **Domain:** mandt
 ```abap
