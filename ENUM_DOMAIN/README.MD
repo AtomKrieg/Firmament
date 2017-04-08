@@ -5,7 +5,6 @@ Examples
 **Domain:** mandt
 
 >types: begin of t_mandt,
-
 >  _000 type mandt value '000',  
 >  _001 type mandt value '001',  
 >  _066 type mandt value '066',  
