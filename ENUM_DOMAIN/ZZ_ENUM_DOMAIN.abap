@@ -412,12 +412,13 @@ class lcl_enum_domain implementation.
 
   method generate.
     field-symbols: <value> type t_value.
+    constants: lc_prefix(3) value 'ee_'.
 
-    add_codeline( |types: begin of t_{ to_lower( m_domname ) },| ).
+    add_codeline( |constants: begin of { lc_prefix }{ to_lower( m_domname ) },| ).
     loop at mt_value assigning <value>.
       add_codeline( |  { <value>-name } type { to_lower( m_rollname ) } value '{ <value>-value }',| ).
     endloop.
-    add_codeline( |end of t_{ to_lower( m_domname ) }.| ).
+    add_codeline( |end of { lc_prefix }{ to_lower( m_domname ) }.| ).
   endmethod.                    "generate
 
   method get_text_table_info.
