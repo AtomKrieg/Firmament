@@ -4,27 +4,27 @@
 
 **Domain:** mandt
 ```abap
-types: begin of t_mandt,
+constants: begin of ee_mandt,
   _000 type mandt value '000',  
   _001 type mandt value '001',  
   _066 type mandt value '066',  
-end of t_mandt.
+end of ee_mandt.
 ```
 
 **Domain:** koart
 ```abap
-types: begin of t_koart,
+constants: begin of ee_koart,
   Assets type koart value 'A',
   Customers type koart value 'D',
   Vendors type koart value 'K',
   Material type koart value 'M',
   GL_accounts type koart value 'S',
-end of t_koart.
+end of ee_koart.
 ```
 
 **Domain:** spras
 ```abap
-types: begin of t_spras,
+constants: begin of ee_spras,
   Serbian type spras value '0',
   Chinese type spras value '1',
   Thai type spras value '2',
@@ -66,5 +66,5 @@ types: begin of t_spras,
   Catalan type spras value 'c',
   Serbian_Latin type spras value 'd',
   Indonesian type spras value 'i',
-end of t_spras.
+end of ee_spras.
 ```
