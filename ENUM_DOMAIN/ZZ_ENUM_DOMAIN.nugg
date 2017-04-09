@@ -1,0 +1,576 @@
+<?xml version="1.0" encoding="utf-8"?>
+<nugget name="ZZ_ENUM_DOMAIN">
+ <PROG NAME="ZZ_ENUM_DOMAIN" VARCL="X" SUBC="1" RMAND="001" RLOAD="E" FIXPT="X" UCCHECK="X">
+  <textPool>
+   <language SPRAS="E">
+    <textElement ID="R" ENTRY="Translate domain values to abap code enum type definition." LENGTH="58 "/>
+   </language>
+  </textPool>
+  <dynpros>
+   <dynpro PROG="ZZ_ENUM_DOMAIN" DNUM="0100" FNUM="0100" BZMX="200 " BZBR="255 " MILI="196 " MICO="37 " MALI="0 " MACO="0 " NOLI="200 " NOCO="255 " VALP="0 " CUAN="G" SPRA="E" DTEXT="100">
+    <dynprofield FNAM="DD07V-DOMNAME" DIDX="0000" FLG1="A0" FLG2="00" FLG3="84" FMB1="00" FMB2="08" LENG="1E" LINE="01" COLN="02" LANF="00" LBLK="00" LREP="00" TYPE="CHAR" ITYP="C" AGLT="3C" ADEZ="00" STXT="______________________________" RES1="X                                      00"/>
+    <dynprofield FNAM="BTN_COPY" DIDX="0003" FLG1="00" FLG2="00" FLG3="00" FILL="P" FMB1="30" FMB2="00" LENG="1B" LINE="01" COLN="24" LANF="00" LBLK="00" LREP="00" TYPE="CHAR" AUTH="101" AGLT="00" ADEZ="00" STXT="@2U\QCopy all to clipboard@" RES1="                                                                                                                                                                        COPY"/>
+    <dynprofield FNAM="TEXTEDIT" DIDX="00C7" FLG1="00" FLG2="30" FLG3="00" FILL="U" FMB1="30" FMB2="00" LENG="FF" LINE="02" COLN="02" LANF="00" LBLK="00" LREP="00" AUTH="102" AGLT="14" ADEZ="3C"/>
+    <dynprofield DIDX="0000" FLG1="80" FLG2="10" FLG3="00" FMB1="00" FMB2="00" LENG="14" LINE="FF" COLN="01" LTYP="O" LANF="00" LBLK="00" LREP="00" TYPE="CHAR" AGLT="00" ADEZ="00" STXT="____________________"/>
+    <dynproflowsource>process before output.
+  module pbo.
+
+process after input.
+  module pai.</dynproflowsource>
+   </dynpro>
+  </dynpros>
+  <pfstatus>
+   <pfstatus_sta CODE="S100" MODAL="D" ACTCODE="000001" PFKCODE="000001" BUTCODE="0001" INT_NOTE="MAIN"/>
+   <pfstatus_fun CODE="BACK" TEXTNO="001" TEXT_TYPE="S" FUN_TEXT="Back"/>
+   <pfstatus_fun CODE="COPY" TEXTNO="001" TEXT_TYPE="S" TEXT_NAME="ICON_SYSTEM_SAVE" ICON_ID="@2L@" FUN_TEXT="Save"/>
+   <pfstatus_fun CODE="EXIT" TEXTNO="001" TEXT_TYPE="S" TEXT_NAME="ICON_CANCEL" ICON_ID="@0W@" FUN_TEXT="Cancel"/>
+   <pfstatus_fun CODE="SAVE" TEXTNO="001" TEXT_TYPE="S" TEXT_NAME="ICON_SYSTEM_SAVE" ICON_ID="@2L@" FUN_TEXT="Save"/>
+   <pfstatus_fun CODE="UP" TEXTNO="001" TEXT_TYPE="S" FUN_TEXT="Exit"/>
+   <pfstatus_pfk CODE="000001" PFNO="03" FUNCODE="BACK" FUNNO="001"/>
+   <pfstatus_pfk CODE="000001" PFNO="11" FUNCODE="COPY" FUNNO="001"/>
+   <pfstatus_pfk CODE="000001" PFNO="12" FUNCODE="EXIT" FUNNO="001"/>
+   <pfstatus_pfk CODE="000001" PFNO="15" FUNCODE="UP" FUNNO="001"/>
+   <pfstatus_set STATUS="S100" FUNCTION="BACK"/>
+   <pfstatus_set STATUS="S100" FUNCTION="COPY"/>
+   <pfstatus_set STATUS="S100" FUNCTION="EXIT"/>
+   <pfstatus_set STATUS="S100" FUNCTION="SAVE"/>
+   <pfstatus_set STATUS="S100" FUNCTION="UP"/>
+   <pfstatus_doc OBJ_TYPE="A" OBJ_CODE="000001" MODAL="D" INT_NOTE="MAIN"/>
+   <pfstatus_doc OBJ_TYPE="P" OBJ_CODE="000001" MODAL="D" INT_NOTE="MAIN"/>
+   <pfstatus_doc OBJ_TYPE="B" OBJ_CODE="000001" SUB_CODE="0001" MODAL="D" INT_NOTE="MAIN"/>
+   <pfstatus_tit CODE="T100" TEXT="Enum to domain"/>
+  </pfstatus>
+  <source>report  zz_enum_domain.
+*=====================================================================*
+*                              TOP
+*=====================================================================*
+tables: dd07v.
+type-pools: abap.
+constants: true value abap_true, false value abap_false.
+class lcl_app definition deferred.
+class lcl_enum_domain definition deferred.
+
+data: app type ref to lcl_app.
+
+*----------------------------------------------------------------------*
+*       CLASS lcl_app DEFINITION
+*----------------------------------------------------------------------*
+class lcl_app definition.
+  public section.
+    methods show.
+    methods pbo.
+    methods pai
+      importing i_ucomm type syucomm.
+
+  private section.
+    types: tt_text type standard table of text72
+    with non-unique default key.
+
+    methods refresh_textedit
+      importing i_domname type domname
+      returning value(r_text) type tt_text.
+
+    methods copy_to_clipboard.
+
+    data: m_cont type ref to cl_gui_custom_container.
+    data: m_textedit type ref to cl_gui_textedit.
+    data: m_curdom type domname.
+endclass.                    &quot;lcl_app DEFINITION
+
+*----------------------------------------------------------------------*
+*       CLASS lcl_enum_domain DEFINITION
+*----------------------------------------------------------------------*
+class lcl_enum_domain definition create private.
+  public section.
+    class-methods class_constructor.
+
+    types: begin of t_value,
+      name type fieldname,
+      value type domvalue_l,
+    end of t_value.
+
+    types: tt_value type standard table of t_value
+    with non-unique default key.
+
+    types: tt_text type standard table of text72
+    with non-unique default key.
+
+    class-methods new
+       importing i_domname type domname
+       returning value(r_instance) type ref to lcl_enum_domain.
+
+    data: mt_value type tt_value read-only.
+    data: m_domname type domname read-only.
+    data: m_rollname type rollname read-only.
+
+    methods make.
+
+    data: mt_code type tt_text read-only.
+
+  private section.
+    class-data: m_allowed_symbols type text100.
+    class-data: m_prefix_for_numeric type c.
+    class-data: mt_lang_order type range of spras.
+
+    methods based_by_fixed.
+
+    methods based_by_table
+      importing i_tabname type tabname.
+
+    methods add_codeline
+      importing i_line type text72.
+
+    methods transliterate.
+    methods purge_names.
+    methods add_prefix.
+    methods generate.
+
+    types: begin of t_texttableinfo,
+        tabname type tabname,
+        langfield type fieldname,
+        keyfield type fieldname,
+        keyrollname type rollname,
+        textfield type fieldname,
+        textrollname type fieldname,
+      end of t_texttableinfo.
+
+    methods get_text_table_info
+      importing i_tabname type tabname
+      returning value(r_texttableinfo) type t_texttableinfo.
+
+    methods create_dynamic_table
+      importing i_texttableinfo type t_texttableinfo
+      returning value(r_dref) type ref to data.
+
+    methods get_most_popular_rollname
+      returning value(r_rollname) type rollname.
+endclass.                    &quot;lcl_enum_domain DEFINITION
+
+*----------------------------------------------------------------------*
+*       CLASS lcl_app IMPLEMENTATION
+*----------------------------------------------------------------------*
+class lcl_app implementation.
+  method show.
+    call screen 100.
+  endmethod.                    &quot;show
+
+  method pbo.
+    set pf-status &apos;S100&apos;.
+    set titlebar &apos;T100&apos;.
+
+    check m_cont is initial.
+
+    create object m_cont
+      exporting
+        container_name = &apos;TEXTEDIT&apos;.
+
+    create object m_textedit
+      exporting
+        parent        = m_cont
+        wordwrap_mode = cl_gui_textedit=&gt;wordwrap_at_fixed_position.
+
+    m_textedit-&gt;set_readonly_mode( 1 ).
+  endmethod.                    &quot;pbo
+
+  method pai.
+    case i_ucomm.
+      when &apos;BACK&apos; or &apos;UP&apos; or &apos;EXIT&apos;. leave program.
+      when &apos;COPY&apos;. copy_to_clipboard( ).
+      when others. refresh_textedit( dd07v-domname ).
+    endcase.
+  endmethod.                    &quot;pai
+
+  method refresh_textedit.
+    data: lo type ref to lcl_enum_domain.
+    lo = lcl_enum_domain=&gt;new( dd07v-domname ).
+    check lo is not initial.
+
+    lo-&gt;make( ).
+    m_textedit-&gt;set_text_as_r3table( lo-&gt;mt_code ).
+  endmethod.                    &quot;convert
+  method copy_to_clipboard.
+    data: lt_text type tt_text.
+    data: rc type i.
+
+    m_textedit-&gt;get_text_as_r3table( importing table = lt_text ).
+    cl_gui_frontend_services=&gt;clipboard_export( importing data = lt_text changing rc = rc ).
+  endmethod.                    &quot;copy_to_clipboard
+endclass.                    &quot;lcl_app IMPLEMENTATION
+
+*----------------------------------------------------------------------*
+*       CLASS lcl_enum_domain IMPLEMENTATION
+*----------------------------------------------------------------------*
+class lcl_enum_domain implementation.
+  method class_constructor.
+    m_allowed_symbols = sy-abcde &amp;&amp; to_lower( sy-abcde ) &amp;&amp; &apos;01234567890 _&apos;.
+
+    m_prefix_for_numeric = &apos;_&apos;.
+
+    data: ls_lang_order like line of mt_lang_order value &apos;IEQ&apos;.
+
+    ls_lang_order-low = &apos;E&apos;.
+    append ls_lang_order to mt_lang_order.
+
+    if sy-langu &lt;&gt; &apos;E&apos;.
+      ls_lang_order-low = sy-langu.
+      append ls_lang_order to mt_lang_order.
+    endif.
+  endmethod.                    &quot;class_constructor
+
+  method new.
+    data: ls_dd01l type dd01l.
+
+    select single *
+      from dd01l
+      into ls_dd01l
+      where domname = i_domname.
+
+    if ls_dd01l-valexi &lt;&gt; true and ls_dd01l-entitytab is initial.
+      return.
+    endif.
+
+    create object r_instance.
+    r_instance-&gt;m_domname = i_domname.
+
+    if ls_dd01l-valexi = true.
+      r_instance-&gt;based_by_fixed( ).
+    else.
+      r_instance-&gt;based_by_table( ls_dd01l-entitytab ).
+    endif.
+
+  endmethod.                    &quot;new
+
+  method based_by_fixed.
+
+    select single rollname
+      from dd04l
+      into m_rollname
+      where rollname = m_domname
+        and domname = m_domname.
+
+    if sy-subrc &lt;&gt; 0.
+      m_rollname = get_most_popular_rollname( ).
+    endif.
+
+    data: lt_dd07v type table of dd07v.
+    data: ls_dd07v type dd07v.
+    data: ls_lang_order like line of mt_lang_order.
+
+    loop at mt_lang_order into ls_lang_order.
+
+      select ddtext domvalue_l
+        from dd07v
+        into corresponding fields of table lt_dd07v
+        where domname = m_domname
+          and ddlanguage = ls_lang_order-low.
+
+      if sy-subrc = 0.
+        exit.
+      endif.
+    endloop.
+
+    data: ls_value type t_value.
+
+    loop at lt_dd07v into ls_dd07v.
+      ls_value-name = ls_dd07v-ddtext.
+      ls_value-value = ls_dd07v-domvalue_l.
+      append ls_value to mt_value.
+    endloop.
+  endmethod.                    &quot;based_by_fixed
+
+  method based_by_table.
+    data: l_fieldname type fieldname.
+
+    case i_tabname.
+      when &apos;T000&apos;.
+        l_fieldname = &apos;MANDT&apos;.
+        m_rollname = &apos;MANDT&apos;.
+      when others.
+        select single fieldname rollname
+          into (l_fieldname, m_rollname)
+          from dd03l
+          where tabname = i_tabname
+            and keyflag = true
+            and fieldname &lt;&gt; &apos;MANDT&apos;.
+    endcase.
+
+    data: l_dref type ref to data.
+    field-symbols: &lt;tab&gt; type standard table.
+    field-symbols: &lt;val&gt; type any.
+    data: ls_value type t_value.
+
+    data: ls_texttableinfo type t_texttableinfo.
+
+    ls_texttableinfo = get_text_table_info( i_tabname ).
+
+    &quot; no text table -&gt; only values.
+    if ls_texttableinfo is initial.
+      create data l_dref type standard table of (m_rollname) with non-unique default key.
+      assign l_dref-&gt;* to &lt;tab&gt;.
+
+      select (l_fieldname)
+        into table &lt;tab&gt;
+        from (i_tabname).
+
+      loop at &lt;tab&gt; assigning &lt;val&gt;.
+        ls_value-name = &lt;val&gt;.
+        ls_value-value = &lt;val&gt;.
+        append ls_value to mt_value.
+      endloop.
+
+      return.
+    endif.
+
+    l_dref = create_dynamic_table( ls_texttableinfo ).
+    assign l_dref-&gt;* to &lt;tab&gt;.
+
+    data: ls_lang_order like line of mt_lang_order.
+    data: fields_for_select type string.
+
+    fields_for_select = ls_texttableinfo-keyfield &amp;&amp; ` ` &amp;&amp; ls_texttableinfo-textfield.
+
+    if ls_texttableinfo-langfield is initial.
+      select (fields_for_select)
+          into table &lt;tab&gt;
+          from (ls_texttableinfo-tabname).
+    else.
+
+      data: condition type string.
+      loop at mt_lang_order into ls_lang_order.
+
+        condition = |{ ls_texttableinfo-langfield } = &apos;{ ls_lang_order-low }&apos;|.
+
+        select (fields_for_select)
+          into table &lt;tab&gt;
+          from (ls_texttableinfo-tabname)
+          where (condition).
+
+        if sy-subrc = 0.
+          exit.
+        endif.
+      endloop.
+    endif.
+
+    field-symbols: &lt;domname&gt; type any.
+    field-symbols: &lt;domvalue&gt; type any.
+
+    if ls_texttableinfo-textfield is initial.
+      loop at &lt;tab&gt; assigning &lt;val&gt;.
+        assign component ls_texttableinfo-keyfield of structure &lt;val&gt; to &lt;domname&gt;.
+        ls_value-name = &lt;domname&gt;.
+        ls_value-value = &lt;domname&gt;.
+        append ls_value to mt_value.
+      endloop.
+    else.
+      loop at &lt;tab&gt; assigning &lt;val&gt;.
+        assign component ls_texttableinfo-textfield of structure &lt;val&gt; to &lt;domname&gt;.
+        assign component ls_texttableinfo-keyfield of structure &lt;val&gt; to &lt;domvalue&gt;.
+        ls_value-name = &lt;domname&gt;.
+        ls_value-value = &lt;domvalue&gt;.
+        append ls_value to mt_value.
+      endloop.
+    endif.
+
+  endmethod.                    &quot;based_by_table
+
+  method make.
+
+    transliterate( ).
+    purge_names( ).
+    add_prefix( ).
+    generate( ).
+
+  endmethod.                    &quot;make
+
+  method add_codeline.
+    append i_line to mt_code.
+  endmethod.                    &quot;add_codeline
+
+  method transliterate.
+    data: transliterator type ref to cl_icu_transformation.
+
+    cl_icu_transformation=&gt;create_instance_from_id(
+      exporting im_id = &apos;Any-Latin&apos;
+      importing ex_trans = transliterator ).
+
+    field-symbols: &lt;value&gt; type t_value.
+    data: str type string.
+
+    loop at mt_value assigning &lt;value&gt;.
+      transliterator-&gt;transliterate(
+        exporting im_text = &lt;value&gt;-name
+        importing ex_text = str ).
+
+      &lt;value&gt;-name = str.
+    endloop.
+  endmethod.                    &quot;transliterate
+
+  method purge_names.
+
+    field-symbols: &lt;value&gt; type t_value.
+    field-symbols: &lt;name&gt; type fieldname.
+    data: idx type i.
+    data: char type c.
+    data: count type i value 0.
+    data: result type fieldname.
+    data: len type i.
+
+    loop at mt_value assigning &lt;value&gt;.
+      assign component 1 of structure &lt;value&gt; to &lt;name&gt;.
+
+      count = 0.
+      result = &apos;&apos;.
+      len = strlen( &lt;value&gt;-name ).
+
+      do len times.
+        idx = sy-index - 1.
+        char = &lt;value&gt;-name+idx(1).
+        check char co m_allowed_symbols.
+        translate char using &apos; _&apos;.
+        result+count(1) = char.
+        count = count + 1.
+      enddo.
+
+      &lt;value&gt;-name = result.
+    endloop.
+  endmethod.                    &quot;purge_name
+
+  method add_prefix.
+    field-symbols: &lt;value&gt; type t_value.
+    data: need_prefix type boolean value false.
+
+    loop at mt_value assigning &lt;value&gt;.
+      check &lt;value&gt;-name(1) co &apos;0123456789&apos;.
+      need_prefix = true.
+      exit.
+    endloop.
+
+    check need_prefix = true.
+
+    loop at mt_value assigning &lt;value&gt;.
+      &lt;value&gt;-name = m_prefix_for_numeric &amp;&amp; &lt;value&gt;-name.
+    endloop.
+  endmethod.                    &quot;add_prefix
+
+  method generate.
+    field-symbols: &lt;value&gt; type t_value.
+    constants: lc_prefix(3) value &apos;ee_&apos;.
+
+    add_codeline( |constants: begin of { lc_prefix }{ to_lower( m_domname ) },| ).
+    loop at mt_value assigning &lt;value&gt;.
+      add_codeline( |  { &lt;value&gt;-name } type { to_lower( m_rollname ) } value &apos;{ &lt;value&gt;-value }&apos;,| ).
+    endloop.
+    add_codeline( |end of { lc_prefix }{ to_lower( m_domname ) }.| ).
+  endmethod.                    &quot;generate
+
+  method get_text_table_info.
+
+    select single tabname fieldname
+      from dd08l
+      into (r_texttableinfo-tabname, r_texttableinfo-keyfield)
+      where checktable = i_tabname
+        and frkart = &apos;TEXT&apos;
+        and as4local = &apos;A&apos;.
+
+    check sy-subrc = 0.
+
+    select single rollname
+      from dd03l
+      into (r_texttableinfo-keyrollname)
+      where tabname = r_texttableinfo-tabname
+        and fieldname = r_texttableinfo-keyfield
+        and as4local = &apos;A&apos;.
+
+    select fieldname rollname
+      from dd03l
+      into (r_texttableinfo-textfield, r_texttableinfo-textrollname)
+      where tabname = r_texttableinfo-tabname
+        and as4local = &apos;A&apos;
+        and keyflag = false
+      order by position.
+      exit.
+    endselect.
+
+    select single fieldname
+      from dd03l
+      into r_texttableinfo-langfield
+      where tabname = r_texttableinfo-tabname
+        and as4local = &apos;A&apos;
+        and keyflag = true
+        and checktable = &apos;T002&apos;
+        and not fieldname in (r_texttableinfo-keyfield, &apos;MANDT&apos;).
+
+  endmethod.                    &quot;get_text_table_info
+
+  method create_dynamic_table.
+    data: lt_comp type abap_component_tab.
+    data: ls_comp type abap_componentdescr.
+    data: edescr type ref to cl_abap_elemdescr.
+
+    ls_comp-name = i_texttableinfo-keyfield.
+    edescr ?= cl_abap_elemdescr=&gt;describe_by_name( i_texttableinfo-keyrollname ).
+    ls_comp-type = edescr.
+    append ls_comp to lt_comp.
+
+    if not i_texttableinfo-textfield is initial.
+      ls_comp-name = i_texttableinfo-textfield.
+      edescr ?= cl_abap_elemdescr=&gt;describe_by_name( i_texttableinfo-textrollname ).
+      ls_comp-type = edescr.
+      append ls_comp to lt_comp.
+    endif.
+
+    data: sdescr type ref to cl_abap_structdescr.
+    sdescr = cl_abap_structdescr=&gt;create( lt_comp ).
+
+    data: tdescr type ref to cl_abap_tabledescr.
+    tdescr = cl_abap_tabledescr=&gt;create( sdescr ).
+
+    create data r_dref type handle tdescr.
+  endmethod.                    &quot;create_dynamic_table
+
+  method get_most_popular_rollname.
+    types: begin of t_rollname_count,
+      rollname type rollname,
+      count type i,
+    end of t_rollname_count.
+
+    types: tt_rollname_count type standard table of t_rollname_count
+    with non-unique default key.
+
+    data: lt_rollname type tt_rollname_count.
+    data: ls_rollname type t_rollname_count.
+
+    select rollname count( distinct rollname ) as count
+      from dd04l
+      into corresponding fields of table lt_rollname
+      where domname = m_domname
+        and as4local = &apos;A&apos;
+      group by rollname.
+
+    read table lt_rollname into ls_rollname index lines( lt_rollname ).
+    m_rollname = ls_rollname-rollname.
+  endmethod.                    &quot;get_most_popular_rollname
+endclass.                    &quot;lcl_enum_domain IMPLEMENTATION
+
+*=====================================================================*
+*                            PROGRAM
+*=====================================================================*
+start-of-selection.
+  create object app.
+  app-&gt;show( ).
+
+*----------------------------------------------------------------------*
+*  MODULE pbo OUTPUT
+*----------------------------------------------------------------------*
+module pbo output.
+  app-&gt;pbo( ).
+endmodule.                    &quot;pbo OUTPUT
+
+*----------------------------------------------------------------------*
+*  MODULE pai INPUT
+*----------------------------------------------------------------------*
+module pai input.
+  app-&gt;pai( sy-ucomm ).
+endmodule.                    &quot;pai INPUT</source>
+ </PROG>
+</nugget>
