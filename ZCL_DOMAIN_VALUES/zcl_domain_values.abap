@@ -15,7 +15,7 @@ public section.
     importing i_domvalue type clike
     returning value(r_text) type ddtext.
 
-  data: values type tt_value.
+  data: values type tt_value read-only.
 
 protected section.
 private section.
